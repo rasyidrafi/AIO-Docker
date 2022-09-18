@@ -1,0 +1,72 @@
+version: '3.8'
+services:
+  nginx:
+    container_name: nginx
+    image: nginx:1.11.10-alpine
+    ports:
+      - 90:80
+  php:
+    container_name: php-apache
+    build:
+      context: ./php
+      dockerfile: Dockerfile
+    volumes:
+      - ./php:/var/www/html/
+    ports:
+      - 8000:80
+    depends_on:
+      - db
+  db:
+    container_name: mydb
+    image: mysql:5-oracle
+    restart: always
+    environment:
+      # Database Name
+      MYSQL_DATABASE: 'dry-it'
+      # Password for root access
+      MYSQL_ROOT_PASSWORD: '123456'
+      MYSQL_ROOT_HOST: '%'
+    volumes:
+      - ./mysql:/var/lib/mysql
+    ports:
+      - '3305:3306'
+  adminer:
+    container_name: adminer
+    image: adminer:4.8.1
+    restart: always
+    ports:
+      - 8070:8080
+  phpmyadmin:
+    image: phpmyadmin:5.2.0
+    environment:
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    ports:
+      - "9090:8080"
+      - "91:80"
+
+  #CI CD Service
+  jenkins:
+    hostname: jenkins
+    image: jenkins/jenkins:lts
+    privileged: true
+    user: root
+    ports:
+      - '8090:8080'
+    container_name: jenkins
+    volumes:
+      - ./jenkins:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      jenkins-net:
+        aliases:
+          - jenkins-net
+
+# Names our volume
+volumes:
+  mysql:
+  jenkins-data:
+
+# Network
+networks:
+  jenkins-net:
